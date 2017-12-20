@@ -32,7 +32,7 @@ def call() {
 				stage("deploy") {
 					sh "docker tag fiery-test:${BRANCH_NAME} fiery-test:deploy"
 					sh "docker rmi fiery-test:${BRANCH_NAME}"
-					sh "docker container kill deploy"
+					sh "docker container kill deploy || true"
 					sh "docker container run -e root='/' --name deploy --rm -p 10080:8080 fiery-test:deploy"
 				}
 			} else if (BRANCH_NAME == "predeploy") {
