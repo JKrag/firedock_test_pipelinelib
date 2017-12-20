@@ -1,13 +1,26 @@
 def call() {
+
 	node {
+
 		stage('checkout'){
 			checkout scm
 		}
+
+		stage('R check') {
+			sh 'docker build --pull --no-cache -t fiery-check:latest -f Dockerfile_check .'
+			sh 'docker container create --name firecheck fiery-check'
+			sh 'docker cp firecheck:check_result check_result'
+			sh 'docker cp firecheck:firedock.Rcheck check_artefacts'
+			sh 'docker rm firecheck'
+			sh 'tar czf check_artefacts.tar.gz check_artefacts'
+			archive 'check_artefacts.tar.gz'
+			sh 'grep SUCCESS check_result'
+		}
+
 		stage('build docker image'){
 			sh 'docker build -t fiery-test:${BRANCH_NAME} . '
 		}
-	}
-	node {
+
 		stage("run docker"){
 			// https://vsupalov.com/docker-build-time-env-values/
 			sh 'docker container run -e root="${BRANCH_NAME}" --name mylittlefiery --rm -p 8000:8080 fiery-test:${BRANCH_NAME} &'
